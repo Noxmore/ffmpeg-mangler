@@ -1,6 +1,8 @@
 pub use eframe::{egui::*, *, egui::Frame};
 pub use keystone::*;
-pub use std::{sync::Mutex, time::Duration};
+pub use std::time::Duration;
+pub use std::time::Instant;
+pub use std::sync::{Arc, Mutex};
 pub use std::thread;
 pub use std::process::*;
 pub use std::io;

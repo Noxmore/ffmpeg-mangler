@@ -1,1 +1,1 @@
-Bash scripts to mangle video and audio using ffmpeg
+Both bash scripts, and a gui application to mangle video and audio using ffmpeg
