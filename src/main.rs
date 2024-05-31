@@ -67,20 +67,17 @@ impl ManglerApp
 {
 	fn new(cc: &CreationContext<'_>) -> Self
 	{
-		let mut visuals = Visuals::dark();
+		match egui_system_theme::system_theme() {
+			Ok(style) => cc.egui_ctx.set_style(style),
+			Err(err) => {
+				rfd::MessageDialog::new()
+					.set_level(rfd::MessageLevel::Error)
+					.set_description(format!("Failed to get system theme: {err}"))
+					.set_buttons(rfd::MessageButtons::Ok)
+					.show();
+			}
+		}
 		
-		//let rounding = Rounding::none();
-		//visuals.widgets.active.rounding = rounding;
-		//visuals.widgets.inactive.rounding = rounding;
-		//visuals.widgets.hovered.rounding = rounding;
-		//visuals.widgets.noninteractive.rounding = rounding;
-		visuals.widgets.noninteractive.fg_stroke = Stroke::new(1., Color32::WHITE);
-		
-		//let mut fonts = FontDefinitions::default();
-		//for (_name, data) in &mut fonts.font_data { data.tweak.scale *= 1.5; }
-		
-		//cc.egui_ctx.set_fonts(fonts);
-		cc.egui_ctx.set_visuals(visuals);
 		cc.egui_ctx.set_pixels_per_point(1.2);
 
 		egui_extras::install_image_loaders(&cc.egui_ctx);
@@ -143,11 +140,14 @@ impl App for ManglerApp
 
 			self.prev_settings = self.settings.clone();
 		}
-		
-		SidePanel::left("settings").resizable(false).show(ctx, |ui| {
+
+		egui_system_theme::titlebar_extension(ctx, "menu_bar", false, |ui| {
 			ui.set_enabled(matches!(render_state, RenderState::Idle));
+			ui.add_space(3.);
 			
 			ui.horizontal(|ui| {
+				ui.add_space(ui.available_width() / 2. - 180.);
+
 				ui.label("File");
 				ui.text_edit_singleline(&mut self.settings.path);
 				if ui.button("...").clicked() {
@@ -161,8 +161,14 @@ impl App for ManglerApp
 				}
 			});
 
+			ui.add_space(3.);
+		});
+		
+		SidePanel::left("settings").resizable(false).show(ctx, |ui| {
+			ui.set_enabled(matches!(render_state, RenderState::Idle));
 
-			Frame::window(ui.style()).outer_margin(6.).show(ui, |ui| {
+
+			Frame::group(ui.style()).outer_margin(6.).show(ui, |ui| {
 				ScrollArea::vertical().auto_shrink([false, false]).max_height(ui.available_height() - 35.).show(ui, |ui| {
 					let spacing = 20.;
 	
@@ -227,7 +233,9 @@ impl App for ManglerApp
 			});
 		});
 
-		CentralPanel::default().show(ctx, |ui|
+		CentralPanel::default()
+			.frame(Frame::central_panel(&ctx.style()).fill(ctx.style().visuals.code_bg_color))
+			.show(ctx, |ui|
 		{
 			ui.centered_and_justified(|ui| {
 				match &*PREVIEW_STATE.lock().unwrap() {
